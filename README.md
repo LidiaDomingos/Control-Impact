@@ -57,6 +57,6 @@ Os feedbacks fornecidos são: um LED irá acender enquanto algum dos botões do 
 - LED's (digital): Um LED será aceso quando um dos quatros botões esquerdos for apertado, também irá ter um LED para os botões direitos, e outro LED para quando o analógico for utilizado também. 
 
 ### Design (2 pts)
-<div width="200" height="400">
+
 ![Controle](controle.png)
-</div>
+
