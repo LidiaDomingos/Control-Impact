@@ -57,6 +57,11 @@
 #define BUT_IDX_GREEN          	13
 #define BUT_IDX_MASK_GREEN     	(1 << BUT_IDX_GREEN)
 
+// #define BUT_PIO_AZUL          	PIOA
+// #define BUT_PIO_ID_AZUL       	ID_PIOA
+// #define BUT_IDX_AZUL          	24
+// #define BUT_IDX_MASK_AZUL     	(1 << BUT_IDX_AZUL)
+
 #define BUT_PIO_BLUE          	PIOD
 #define BUT_PIO_ID_BLUE       	ID_PIOD
 #define BUT_IDX_BLUE          	11
@@ -144,12 +149,11 @@ extern void vApplicationMallocFailedHook(void) {
 /************************************************************************/
 /* handlers / callbacks                                                 */
 /************************************************************************/
-void but_UP_callback(void){
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+void but_callback_UP(void){
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int msg = 1;
-	printf("entrei no but");
-	if(pio_get(BUT_PIO_UP, PIO_INPUT, BUT_IDX_MASK_UP) == 1) {
- 		printf("%d 2", msg);
+	printf("entreii");
+	if(pio_get(BUT_PIO_UP, PIO_INPUT, BUT_IDX_MASK_UP) == 0) {
  		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
  	} 
 	else {
@@ -158,74 +162,76 @@ void but_UP_callback(void){
 }
 
 void but_callback_DOWN(void){
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int msg = 2;
 	if(pio_get(BUT_PIO_DOWN, PIO_INPUT, BUT_IDX_MASK_DOWN) == 0) {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
-		} else {
 		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
+		} else {
+		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
 	}
 }
 
 void but_callback_LEFT(void){
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int msg = 3;
 	if(pio_get(BUT_PIO_LEFT, PIO_INPUT, BUT_IDX_MASK_LEFT) == 0) {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
-		} else {
 		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
+		} else {
+		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
 	}
 }
 
 void but_callback_RIGHT(void){
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int msg = 4;
 	if(pio_get(BUT_PIO_RIGHT, PIO_INPUT, BUT_IDX_MASK_RIGHT) == 0) {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
-		} else {
 		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
+		} else {
+		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
 	}
 }
 
 void but_callback_RED(void){
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int msg = 5;
 	if(pio_get(BUT_PIO_RED, PIO_INPUT, BUT_IDX_MASK_RED) == 0) {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
-		} else {
 		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
+		} else {
+		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
 	}
 }
 
 void but_callback_YELLOW(void){
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int msg = 6;
 	if(pio_get(BUT_PIO_YELLOW, PIO_INPUT, BUT_IDX_MASK_YELLOW) == 0) {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
-		} else {
 		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
+		} else {
+		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
 	}
 }
 
 void but_callback_GREEN(void){
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int msg = 7;
 	if(pio_get(BUT_PIO_GREEN, PIO_INPUT, BUT_IDX_MASK_GREEN) == 0) {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
-		} else {
 		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
+		} else {
+		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
 	}
 }
 
 void but_callback_BLUE(void){
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int msg = 8;
+	printf("entreii");
 	if(pio_get(BUT_PIO_BLUE, PIO_INPUT, BUT_IDX_MASK_BLUE) == 0) {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
-		} else {
 		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
+		} else {
+		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
 	}
 }
+
 /************************************************************************/
 /* funcoes                                                              */
 /************************************************************************/
@@ -259,56 +265,56 @@ void io_init(void){
 	pio_configure(BUT_PIO_YELLOW, PIO_INPUT, BUT_IDX_MASK_YELLOW, PIO_PULLUP | PIO_DEBOUNCE);
 	pio_set_debounce_filter(BUT_PIO_YELLOW, BUT_IDX_MASK_YELLOW, 60);	
 	pio_configure(BUT_PIO_GREEN, PIO_INPUT, BUT_IDX_MASK_GREEN, PIO_PULLUP | PIO_DEBOUNCE);
-	pio_set_debounce_filter(BUT_PIO_GREEN, BUT_IDX_MASK_GREEN, 60);	
+	pio_set_debounce_filter(BUT_PIO_GREEN, BUT_IDX_MASK_GREEN, 60);
 	pio_configure(BUT_PIO_BLUE, PIO_INPUT, BUT_IDX_MASK_BLUE, PIO_PULLUP | PIO_DEBOUNCE);
 	pio_set_debounce_filter(BUT_PIO_BLUE, BUT_IDX_MASK_BLUE, 60);
 	
 	pio_handler_set(BUT_PIO_UP,
 					BUT_PIO_ID_UP,
 					BUT_IDX_MASK_UP,
-					PIO_IT_RISE_EDGE,
-					but_UP_callback);
+					PIO_IT_EDGE,
+					but_callback_UP);
 	
 	pio_handler_set(BUT_PIO_DOWN,
 					BUT_PIO_ID_DOWN,
 					BUT_IDX_MASK_DOWN,
-					PIO_IT_RISE_EDGE,
+					PIO_IT_EDGE,
 					but_callback_DOWN);
 	
 	pio_handler_set(BUT_PIO_LEFT,
 					BUT_PIO_ID_LEFT,
 					BUT_IDX_MASK_LEFT,
-					PIO_IT_RISE_EDGE,
+					PIO_IT_EDGE,
 					but_callback_LEFT);
 	
 	pio_handler_set(BUT_PIO_RIGHT,
 					BUT_PIO_ID_RIGHT,
 					BUT_IDX_MASK_RIGHT,
-					PIO_IT_RISE_EDGE   ,
+					PIO_IT_EDGE,
 					but_callback_RIGHT);
 
 	pio_handler_set(BUT_PIO_RED,
 					BUT_PIO_ID_RED,
 					BUT_IDX_MASK_RED,
-					PIO_IT_RISE_EDGE   ,
+					PIO_IT_EDGE,
 					but_callback_RED);
 
 	pio_handler_set(BUT_PIO_YELLOW,
 					BUT_PIO_ID_YELLOW,
 					BUT_IDX_MASK_YELLOW,
-					PIO_IT_RISE_EDGE   ,
+					PIO_IT_EDGE,
 					but_callback_YELLOW);
 
 	pio_handler_set(BUT_PIO_GREEN,
 					BUT_PIO_ID_GREEN,
 					BUT_IDX_MASK_GREEN,
-					PIO_IT_RISE_EDGE   ,
+					PIO_IT_EDGE,
 					but_callback_GREEN);
 	
 	pio_handler_set(BUT_PIO_BLUE,
 					BUT_PIO_ID_BLUE,
 					BUT_IDX_MASK_BLUE,
-					PIO_IT_RISE_EDGE   ,
+					PIO_IT_EDGE,
 					but_callback_BLUE);
 
 	pio_enable_interrupt(BUT_PIO_UP, BUT_IDX_MASK_UP);
@@ -463,7 +469,6 @@ void task_bluetooth(void) {
 
 	// Task não deve retornar.
 	while(1) {
-		button1 = '0';
 		if (xQueueReceive(xQueue_HIGH, &msg, (TickType_t) 0)) {
 			if (msg == 1) {
 				button1 = '1';
@@ -482,11 +487,14 @@ void task_bluetooth(void) {
 			}
 			if (msg == 6) {
 				button1 = '6';
+				printf("Yellow");
 			}
 			if (msg == 7) {
 				button1 = '7';
+				printf("botao 7");
 			}
 			if (msg == 8) {
+				printf("botao 8");
 				button1 = '8';
 			}
 			// envia status botão
@@ -501,33 +509,33 @@ void task_bluetooth(void) {
 			}
 			usart_write(USART_COM, eof);
 			// dorme por 500 ms
-			vTaskDelay(500 / portTICK_PERIOD_MS);
+			//vTaskDelay(500 / portTICK_PERIOD_MS);
 			
 		}
 		else if (xQueueReceive(xQueue_LOW, &msg, (TickType_t) 0)) {
 			if (msg == 1) {
-				button1 = '10';
+				button1 = 'A';
 			}
 			if (msg == 2) {
-		 		button1 = '20';
+		 		button1 = 'B';
  			}
 			if (msg == 3) {
-				button1 = '30';
+				button1 = 'C';
 			}
 			if (msg == 4) {
-				button1 = '40';
+				button1 = 'D';
 			}
 			if (msg == 5) {
-				button1 = '50';
+				button1 = 'E';
 			}
 			if (msg == 6) {
-				button1 = '60';
+				button1 = 'F';
 			}
 			if (msg == 7) {
-				button1 = '70';
+				button1 = 'G';
 			}
 			if (msg == 8) {
-				button1 = '80';
+				button1 = 'H';
 			}
 			// envia status botão
 			while(!usart_is_tx_ready(USART_COM)) {
@@ -541,9 +549,8 @@ void task_bluetooth(void) {
 			}
 			usart_write(USART_COM, eof);
 			// dorme por 500 ms
-			vTaskDelay(500 / portTICK_PERIOD_MS);
-		}
-		
+			//vTaskDelay(500 / portTICK_PERIOD_MS);
+		}	
 	}
 }
 
