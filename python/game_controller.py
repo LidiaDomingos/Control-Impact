@@ -6,7 +6,7 @@ import pyvjoy # Windows apenas
 
 class MyControllerMap:
     def __init__(self):
-        self.button = {'A': 1}
+        self.button = {'UP': 1, 'DOWN': 2, 'LEFT': 3, 'RIGHT': 4, 'RED': 5, 'YELLOW' : 6, 'GREEN': 7, 'BLUE': 8}
 
 
 class SerialControllerInterface:
@@ -29,12 +29,58 @@ class SerialControllerInterface:
 
         data = self.ser.read()
         logging.debug("Received DATA: {}".format(data))
+        print(data)
 
         if data == b'1':
             logging.info("Sending press")
-            self.j.set_button(self.mapping.button['A'], 1)
-        elif data == b'0':
-            self.j.set_button(self.mapping.button['A'], 0)
+            print('entrei no 1')
+            self.j.set_button(self.mapping.button['UP'], 1)
+
+        elif data == b'10':
+            print('entrei no 10')
+            self.j.set_button(self.mapping.button['UP'], 0)
+
+        if data == b'2':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['DOWN'], 2)
+        elif data == b'20':
+            self.j.set_button(self.mapping.button['DOWN'], 0)  
+
+        if data == b'3':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['LEFT'], 3)
+        elif data == b'30':
+            self.j.set_button(self.mapping.button['LEFT'], 0)  
+
+        if data == b'4':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['RIGHT'], 4)
+        elif data == b'40':
+            self.j.set_button(self.mapping.button['RIGHT'], 0)  
+
+        if data == b'5':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['RED'], 5)
+        elif data == b'50':
+            self.j.set_button(self.mapping.button['RED'], 0)  
+
+        if data == b'6':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['YELLOW'], 6)
+        elif data == b'60':
+            self.j.set_button(self.mapping.button['YELLOW'], 0)  
+
+        if data == b'7':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['GREEN'], 7)
+        elif data == b'70':
+            self.j.set_button(self.mapping.button['GREEN'], 0)  
+
+        if data == b'8':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['BLUE'], 8)
+        elif data == b'80':
+            self.j.set_button(self.mapping.button['BLUE'], 0)  
 
         self.incoming = self.ser.read()
 
