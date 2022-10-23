@@ -93,6 +93,19 @@ class SerialControllerInterface:
             conv_valor2 = int.from_bytes(valor2 + valor1, byteorder="big")
             self.j.set_axis(pyvjoy.HID_USAGE_Y, conv_valor2*int(32762/4095))
 
+        if data == b'K':
+            valor1 = self.ser.read()
+            valor2 = self.ser.read()
+            conv_valor1 = int.from_bytes(valor2 + valor1, byteorder="big")
+            logging.info(conv_valor1)
+            self.j.set_axis(pyvjoy.HID_USAGE_RX, conv_valor1*int(32762/4095))
+        
+        if data == b'L':
+            valor1 = self.ser.read()
+            valor2 = self.ser.read()
+            conv_valor2 = int.from_bytes(valor2 + valor1, byteorder="big")
+            self.j.set_axis(pyvjoy.HID_USAGE_RY, conv_valor2*int(32762/4095))
+
         self.incoming = self.ser.read()
 
 

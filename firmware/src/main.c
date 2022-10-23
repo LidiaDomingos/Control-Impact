@@ -269,6 +269,25 @@ void AFEC_VRY_callback_LEFT(void){
 	
 }
 
+void AFEC_VRX_callback_RIGHT(void){
+	afecData afec;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	afec.m = 'K';
+	afec.value = afec_channel_get_value(AFEC_VRX_RIGHT, AFEC_VRX_CHANNEL_RIGHT);
+	xQueueSendFromISR(xQueue_AFEC, &afec, &xHigherPriorityTaskWoken);
+	
+	afec_channel_enable(AFEC_VRY_RIGHT, AFEC_VRY_CHANNEL_RIGHT);
+	afec_start_software_conversion(AFEC_VRY_RIGHT);
+}
+
+void AFEC_VRY_callback_RIGHT(void){
+	afecData afec;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	afec.m = 'L';
+	afec.value = afec_channel_get_value(AFEC_VRY_RIGHT, AFEC_VRY_CHANNEL_RIGHT);
+	xQueueSendFromISR(xQueue_AFEC, &afec, &xHigherPriorityTaskWoken);
+	
+}
 
 /**
 *  Interrupt handler for TC1 interrupt.
@@ -288,7 +307,8 @@ void TC0_Handler(void){
 	afec_channel_enable(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT);
 	afec_start_software_conversion(AFEC_VRX_LEFT);
 	
-
+	afec_channel_enable(AFEC_VRX_RIGHT, AFEC_VRX_CHANNEL_RIGHT);
+	afec_start_software_conversion(AFEC_VRX_RIGHT);
 
 }
 /************************************************************************/
@@ -513,6 +533,7 @@ static void config_AFEC(void){
    *************************************/
   /* Ativa AFEC - 1 */
 	afec_enable(AFEC1);
+	afec_enable(AFEC0);
 
 	/* struct de configuracao do AFEC */
 	struct afec_config afec_cfg;
@@ -523,6 +544,8 @@ static void config_AFEC(void){
 	/* Configura AFEC */
 	afec_init(AFEC_VRX_LEFT, &afec_cfg);
 	afec_init(AFEC_VRY_LEFT, &afec_cfg);
+	afec_init(AFEC_VRX_RIGHT, &afec_cfg);
+	afec_init(AFEC_VRY_RIGHT, &afec_cfg);
 
 	/*** Configuracao específica do canal AFEC ***/
 	struct afec_ch_config afec_ch_cfg;
@@ -530,6 +553,8 @@ static void config_AFEC(void){
 	afec_ch_cfg.gain = AFEC_GAINVALUE_0;
 	afec_ch_set_config(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT, &afec_ch_cfg);
 	afec_ch_set_config(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT, &afec_ch_cfg);
+	afec_ch_set_config(AFEC_VRX_RIGHT, AFEC_VRX_CHANNEL_RIGHT, &afec_ch_cfg);
+	afec_ch_set_config(AFEC_VRY_RIGHT, AFEC_VRY_CHANNEL_RIGHT, &afec_ch_cfg);
 
 	/*
 	* Calibracao:
@@ -538,15 +563,24 @@ static void config_AFEC(void){
 	 */
 	afec_channel_set_analog_offset(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT, 0x200);
 	afec_channel_set_analog_offset(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT, 0x200);
+	afec_channel_set_analog_offset(AFEC_VRX_RIGHT, AFEC_VRX_CHANNEL_RIGHT, 0x200);
+	afec_channel_set_analog_offset(AFEC_VRY_RIGHT, AFEC_VRY_CHANNEL_RIGHT, 0x200);
 
 	/* configura IRQ */
 	afec_set_callback(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT, AFEC_VRX_callback_LEFT, 1);
 	afec_set_callback(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT, AFEC_VRY_callback_LEFT, 1);
+	afec_set_callback(AFEC_VRX_RIGHT, AFEC_VRX_CHANNEL_RIGHT, AFEC_VRX_callback_RIGHT, 1);
+	afec_set_callback(AFEC_VRY_RIGHT, AFEC_VRY_CHANNEL_RIGHT, AFEC_VRY_callback_RIGHT, 1);
 	
 	NVIC_SetPriority(AFEC_VRX_ID_LEFT, 4);
 	NVIC_EnableIRQ(AFEC_VRX_ID_LEFT);
 	NVIC_SetPriority(AFEC_VRY_ID_LEFT, 4);
 	NVIC_EnableIRQ(AFEC_VRY_ID_LEFT);
+	
+	NVIC_SetPriority(AFEC_VRX_ID_RIGHT, 4);
+	NVIC_EnableIRQ(AFEC_VRX_ID_RIGHT);
+	NVIC_SetPriority(AFEC_VRY_ID_RIGHT, 4);
+	NVIC_EnableIRQ(AFEC_VRY_ID_RIGHT);
 	
 }
 
@@ -741,6 +775,56 @@ void task_bluetooth(void) {
 				}
 				usart_write(USART_COM, button2 >> 8);
 						
+				// envia fim de pacote
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, eof);
+				
+			}
+			if (afec.m == 'K'){
+				button2 = afec.value;
+				
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, afec.m);
+				
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, button2);
+				
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, button2 >> 8);
+				
+				// envia fim de pacote
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, eof);
+				
+			}
+			if (afec.m == 'L'){
+				button2 = afec.value;
+				
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, afec.m);
+				
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, button2);
+				
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, button2 >> 8);
+				
 				// envia fim de pacote
 				while(!usart_is_tx_ready(USART_COM)) {
 					vTaskDelay(10 / portTICK_PERIOD_MS);
