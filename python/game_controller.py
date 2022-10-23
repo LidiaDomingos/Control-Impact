@@ -33,11 +33,9 @@ class SerialControllerInterface:
 
         if data == b'1':
             logging.info("Sending press")
-            print('entrei no 1')
             self.j.set_button(self.mapping.button['UP'], 1)
 
         elif data == b'A':
-            print('entrei no 10')
             self.j.set_button(self.mapping.button['UP'], 0)
 
         if data == b'2':
@@ -81,6 +79,19 @@ class SerialControllerInterface:
             self.j.set_button(self.mapping.button['BLUE'], 1)
         elif data == b'H':
             self.j.set_button(self.mapping.button['BLUE'], 0)  
+
+        if data == b'I':
+            valor1 = self.ser.read()
+            valor2 = self.ser.read()
+            conv_valor1 = int.from_bytes(valor2 + valor1, byteorder="big")
+            logging.info(conv_valor1)
+            self.j.set_axis(pyvjoy.HID_USAGE_X, conv_valor1*int(32762/4095))
+        
+        if data == b'J':
+            valor1 = self.ser.read()
+            valor2 = self.ser.read()
+            conv_valor2 = int.from_bytes(valor2 + valor1, byteorder="big")
+            self.j.set_axis(pyvjoy.HID_USAGE_Y, conv_valor2*int(32762/4095))
 
         self.incoming = self.ser.read()
 

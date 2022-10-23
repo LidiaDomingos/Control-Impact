@@ -8,6 +8,7 @@
 #include <asf.h>
 #include "conf_board.h"
 #include <string.h>
+#include <math.h>
 
 /************************************************************************/
 /* defines                                                              */
@@ -57,15 +58,29 @@
 #define BUT_IDX_GREEN          	13
 #define BUT_IDX_MASK_GREEN     	(1 << BUT_IDX_GREEN)
 
-// #define BUT_PIO_AZUL          	PIOA
-// #define BUT_PIO_ID_AZUL       	ID_PIOA
-// #define BUT_IDX_AZUL          	24
-// #define BUT_IDX_MASK_AZUL     	(1 << BUT_IDX_AZUL)
-
 #define BUT_PIO_BLUE          	PIOD
 #define BUT_PIO_ID_BLUE       	ID_PIOD
 #define BUT_IDX_BLUE          	11
 #define BUT_IDX_MASK_BLUE     	(1 << BUT_IDX_BLUE)
+
+// DEFINICÃO ANALÓGICO ESQUERDO
+#define AFEC_VRX_LEFT			AFEC1
+#define AFEC_VRX_ID_LEFT		ID_AFEC1
+#define AFEC_VRX_CHANNEL_LEFT	5 // Canal do pino PC30
+
+#define AFEC_VRY_LEFT			AFEC1
+#define AFEC_VRY_ID_LEFT		ID_AFEC1
+#define AFEC_VRY_CHANNEL_LEFT	6 // Canal do pino PC31
+
+// DEFINICÃO ANALÓGICO DIREITA
+#define AFEC_VRX_RIGHT			AFEC0
+#define AFEC_VRX_ID_RIGHT		ID_AFEC0
+#define AFEC_VRX_CHANNEL_RIGHT	5 // Canal do pino PB2
+
+#define AFEC_VRY_RIGHT			AFEC0
+#define AFEC_VRY_ID_RIGHT		ID_AFEC0
+#define AFEC_VRY_CHANNEL_RIGHT	8 // Canal do pino PA19
+
 
 // usart (bluetooth ou serial)
 // Descomente para enviar dados
@@ -90,7 +105,7 @@
 
 QueueHandle_t xQueue_HIGH;
 QueueHandle_t xQueue_LOW;
-
+QueueHandle_t xQueue_AFEC;
 
 /************************************************************************/
 /* prototypes                                                           */
@@ -105,9 +120,12 @@ extern void xPortSysTickHandler(void);
 
 
 /************************************************************************/
-/* constants                                                            */
+/* STRUCT                                                            */
 /************************************************************************/
-
+typedef struct {
+	int value;
+	char m;	
+} afecData;
 /************************************************************************/
 /* variaveis globais                                                    */
 /************************************************************************/
@@ -152,7 +170,6 @@ extern void vApplicationMallocFailedHook(void) {
 void but_callback_UP(void){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int msg = 1;
-	printf("entreii");
 	if(pio_get(BUT_PIO_UP, PIO_INPUT, BUT_IDX_MASK_UP) == 0) {
  		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
  	} 
@@ -232,6 +249,48 @@ void but_callback_BLUE(void){
 	}
 }
 
+void AFEC_VRX_callback_LEFT(void){
+	afecData afec;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	afec.m = 'I';
+	afec.value = afec_channel_get_value(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT);
+	xQueueSendFromISR(xQueue_AFEC, &afec, &xHigherPriorityTaskWoken);
+	
+	afec_channel_enable(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT);
+	afec_start_software_conversion(AFEC_VRY_LEFT);
+}
+
+void AFEC_VRY_callback_LEFT(void){
+	afecData afec;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	afec.m = 'J';
+	afec.value = afec_channel_get_value(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT);
+	xQueueSendFromISR(xQueue_AFEC, &afec, &xHigherPriorityTaskWoken);
+	
+}
+
+
+/**
+*  Interrupt handler for TC1 interrupt.
+*/
+void TC0_Handler(void){
+	volatile uint32_t ul_dummy;
+
+	/****************************************************************
+	* Devemos indicar ao TC que a interrupção foi satisfeita.
+	******************************************************************/
+	ul_dummy = tc_get_status(TC0, 0);
+	printf("[Debug] TC0 IRQ \n");
+
+	/* Avoid compiler warning */
+	UNUSED(ul_dummy);
+	
+	afec_channel_enable(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT);
+	afec_start_software_conversion(AFEC_VRX_LEFT);
+	
+
+
+}
 /************************************************************************/
 /* funcoes                                                              */
 /************************************************************************/
@@ -243,7 +302,7 @@ void io_init(void){
  	pmc_enable_periph_clk(BUT_PIO_ID_DOWN);
 	pmc_enable_periph_clk(BUT_PIO_ID_LEFT);
 	pmc_enable_periph_clk(BUT_PIO_ID_RIGHT);
-	
+	 
 	pmc_enable_periph_clk(BUT_PIO_ID_RED);
 	pmc_enable_periph_clk(BUT_PIO_ID_YELLOW);
 	pmc_enable_periph_clk(BUT_PIO_ID_GREEN);
@@ -448,6 +507,91 @@ int hc05_init(void) {
 	usart_send_command(USART_COM, buffer_rx, 1000, "AT+PIN0000", 100);
 }
 
+static void config_AFEC(void){
+/*************************************
+   * Ativa e configura AFEC
+   *************************************/
+  /* Ativa AFEC - 1 */
+	afec_enable(AFEC1);
+
+	/* struct de configuracao do AFEC */
+	struct afec_config afec_cfg;
+
+	/* Carrega parametros padrao */
+	afec_get_config_defaults(&afec_cfg);
+
+	/* Configura AFEC */
+	afec_init(AFEC_VRX_LEFT, &afec_cfg);
+	afec_init(AFEC_VRY_LEFT, &afec_cfg);
+
+	/*** Configuracao específica do canal AFEC ***/
+	struct afec_ch_config afec_ch_cfg;
+	afec_ch_get_config_defaults(&afec_ch_cfg);
+	afec_ch_cfg.gain = AFEC_GAINVALUE_0;
+	afec_ch_set_config(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT, &afec_ch_cfg);
+	afec_ch_set_config(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT, &afec_ch_cfg);
+
+	/*
+	* Calibracao:
+	* Because the internal ADC offset is 0x200, it should cancel it and shift
+	 down to 0.
+	 */
+	afec_channel_set_analog_offset(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT, 0x200);
+	afec_channel_set_analog_offset(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT, 0x200);
+
+	/* configura IRQ */
+	afec_set_callback(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT, AFEC_VRX_callback_LEFT, 1);
+	afec_set_callback(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT, AFEC_VRY_callback_LEFT, 1);
+	
+	NVIC_SetPriority(AFEC_VRX_ID_LEFT, 4);
+	NVIC_EnableIRQ(AFEC_VRX_ID_LEFT);
+	NVIC_SetPriority(AFEC_VRY_ID_LEFT, 4);
+	NVIC_EnableIRQ(AFEC_VRY_ID_LEFT);
+	
+}
+
+void TC_init(Tc * TC, int ID_TC, int TC_CHANNEL, int freq){
+	uint32_t ul_div;
+	uint32_t ul_tcclks;
+	uint32_t ul_sysclk = sysclk_get_cpu_hz();
+
+	uint32_t channel = 1;
+
+	/* Configura o PMC */
+	/* O TimerCounter é meio confuso
+	o uC possui 3 TCs, cada TC possui 3 canais
+	TC0 : ID_TC0, ID_TC1, ID_TC2
+	TC1 : ID_TC3, ID_TC4, ID_TC5
+	TC2 : ID_TC6, ID_TC7, ID_TC8
+	*/
+	pmc_enable_periph_clk(ID_TC);
+
+	/** Configura o TC para operar em  4Mhz e interrupçcão no RC compare */
+	tc_find_mck_divisor(freq, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);
+
+	tc_init(TC, TC_CHANNEL, ul_tcclks
+							| TC_CMR_WAVE /* Waveform mode is enabled */
+							| TC_CMR_ACPA_SET /* RA Compare Effect: set */
+							| TC_CMR_ACPC_CLEAR /* RC Compare Effect: clear */
+							| TC_CMR_CPCTRG /* UP mode with automatic trigger on RC Compare */
+	);
+
+	tc_write_ra(TC, TC_CHANNEL, 2*65532/3);
+	tc_write_rc(TC, TC_CHANNEL, 3*65532/3);
+
+	//tc_write_rc(TC, TC_CHANNEL, (ul_sysclk / ul_div) / freq);
+
+	/* Configura e ativa interrupçcão no TC canal 0 */
+	/* Interrupção no C */
+#ifdef DEBUG
+	NVIC_EnableIRQ((IRQn_Type) ID_TC);
+	tc_enable_interrupt(TC, TC_CHANNEL, TC_IER_CPCS);
+#endif
+	/* Inicializa o canal 0 do TC */
+	tc_start(TC, TC_CHANNEL);
+}
+
+
 /************************************************************************/
 /* TASKS                                                                */
 /************************************************************************/
@@ -458,13 +602,16 @@ void task_bluetooth(void) {
 	printf("Inicializando HC05 \n");
 	config_usart0();
 	hc05_init();
-
+	config_AFEC();
+	TC_init(TC0, ID_TC0, 0, 10);
+	tc_start(TC0, 0);
 	// configura LEDs e Botões
 	io_init();
-	
+	afecData afec;
 	int msg = 0;
 
 	char button1 = '0';
+	int	button2 = 0;
 	char eof = 'X';
 
 	// Task não deve retornar.
@@ -550,11 +697,61 @@ void task_bluetooth(void) {
 			usart_write(USART_COM, eof);
 			// dorme por 500 ms
 			//vTaskDelay(500 / portTICK_PERIOD_MS);
+		}
+		else if (xQueueReceive(xQueue_AFEC, &afec, (TickType_t) 0)){
+			if (afec.m == 'I'){
+				button2 = afec.value;
+					
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, afec.m);
+					
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, button2);
+					
+				while(!usart_is_tx_ready(USART_COM)) {   
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, button2 >> 8);
+					
+				// envia fim de pacote
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, eof);
+			}
+			if (afec.m == 'J'){
+				button2 = afec.value;
+				
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, afec.m);
+						
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, button2);
+						
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, button2 >> 8);
+						
+				// envia fim de pacote
+				while(!usart_is_tx_ready(USART_COM)) {
+					vTaskDelay(10 / portTICK_PERIOD_MS);
+				}
+				usart_write(USART_COM, eof);
+				
+			}
+			
 		}	
 	}
 }
-
-
 	
 /************************************************************************/
 /* main                                                                 */
@@ -568,11 +765,15 @@ int main(void) {
 	
 	xQueue_HIGH = xQueueCreate(32, sizeof(int));
 	xQueue_LOW = xQueueCreate(32, sizeof(int));
+	xQueue_AFEC = xQueueCreate(32, sizeof(afecData));
 	
 	if (xQueue_HIGH == NULL){
 		printf("falha em criar a queue \n");
 	}
 	if (xQueue_LOW == NULL){
+		printf("falha em criar a queue \n");
+	}
+	if (xQueue_AFEC == NULL){
 		printf("falha em criar a queue \n");
 	}
 	/* Create task to make led blink */
