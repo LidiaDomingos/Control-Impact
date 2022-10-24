@@ -20,6 +20,11 @@
 #define LED_IDX      8
 #define LED_IDX_MASK (1 << LED_IDX)
 
+#define LED_PIO_HAND      PIOD
+#define LED_PIO_ID_HAND   ID_PIOD
+#define LED_IDX_HAND      22
+#define LED_IDX_MASK_HAND (1 << LED_IDX_HAND)
+
 // Botões azuis da esquerda
 #define BUT_PIO_UP            	PIOD
 #define BUT_PIO_ID_UP         	ID_PIOD
@@ -103,9 +108,10 @@
 #define TASK_BLUETOOTH_STACK_SIZE            (4096/sizeof(portSTACK_TYPE))
 #define TASK_BLUETOOTH_STACK_PRIORITY        (tskIDLE_PRIORITY)
 
-QueueHandle_t xQueue_HIGH;
-QueueHandle_t xQueue_LOW;
-QueueHandle_t xQueue_AFEC;
+QueueHandle_t xQueue_UNICA;
+
+TaskHandle_t xHandshake = NULL;
+TaskHandle_t xBluetooth = NULL;
 
 /************************************************************************/
 /* prototypes                                                           */
@@ -118,17 +124,20 @@ extern void vApplicationTickHook(void);
 extern void vApplicationMallocFailedHook(void);
 extern void xPortSysTickHandler(void);
 
+void task_bluetooth(void);
+void task_handshake(void);
 
 /************************************************************************/
 /* STRUCT                                                            */
 /************************************************************************/
 typedef struct {
-	int value;
-	char m;	
-} afecData;
+	volatile char id;
+	volatile char button;
+	volatile int value;
+} Data;
 /************************************************************************/
 /* variaveis globais                                                    */
-/************************************************************************/
+/************************************************************************
 
 /************************************************************************/
 /* RTOS application HOOK                                                */
@@ -169,124 +178,166 @@ extern void vApplicationMallocFailedHook(void) {
 /************************************************************************/
 void but_callback_UP(void){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	int msg = 1;
+	volatile Data data;
+	data.id = '1';
+	data.value = 0;
 	if(pio_get(BUT_PIO_UP, PIO_INPUT, BUT_IDX_MASK_UP) == 0) {
- 		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
+		printf("entrei no high");
+		data.button = '1';
  	} 
 	else {
-	xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
+		printf("entrei no low");
+		data.button = 'A';
 	}
+	printf("mande pra fila");
+ 	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
+	printf("mande pra fila2");
 }
 
 void but_callback_DOWN(void){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	int msg = 2;
+	Data data;
+	data.id = '2';
+	data.value = 0;
 	if(pio_get(BUT_PIO_DOWN, PIO_INPUT, BUT_IDX_MASK_DOWN) == 0) {
-		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
-		} else {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
+		data.button = '2';
 	}
+	else {
+		data.button = 'B';
+	}
+	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
+
 }
 
 void but_callback_LEFT(void){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	int msg = 3;
+	Data data;
+	data.id = '3';
+	data.value = 0;
 	if(pio_get(BUT_PIO_LEFT, PIO_INPUT, BUT_IDX_MASK_LEFT) == 0) {
-		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
-		} else {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
+		data.button = '3';
 	}
+	else {
+		data.button = 'C';
+	}
+	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
 }
 
 void but_callback_RIGHT(void){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	int msg = 4;
+	Data data;
+	data.id = '4';
+	data.value = 0;
 	if(pio_get(BUT_PIO_RIGHT, PIO_INPUT, BUT_IDX_MASK_RIGHT) == 0) {
-		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
-		} else {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
+		data.button = '4';
 	}
+	else {
+		data.button = 'D';
+	}
+	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
 }
 
 void but_callback_RED(void){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	int msg = 5;
+	Data data;
+	data.id = '5';
+	data.value = 0;
 	if(pio_get(BUT_PIO_RED, PIO_INPUT, BUT_IDX_MASK_RED) == 0) {
-		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
-		} else {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
+		data.button = '5';
 	}
+	else {
+		data.button = 'E';
+	}
+	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
 }
 
 void but_callback_YELLOW(void){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	int msg = 6;
+	Data data;
+	data.id = '6';
+	data.value = 0;
 	if(pio_get(BUT_PIO_YELLOW, PIO_INPUT, BUT_IDX_MASK_YELLOW) == 0) {
-		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
-		} else {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
+		data.button = '6';
 	}
+	else {
+		data.button = 'F';
+	}
+	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
 }
 
 void but_callback_GREEN(void){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	int msg = 7;
+	Data data;
+	data.id = '7';
+	data.value = 0;
 	if(pio_get(BUT_PIO_GREEN, PIO_INPUT, BUT_IDX_MASK_GREEN) == 0) {
-		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
-		} else {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
+		data.button = '7';
 	}
+	else {
+		data.button = 'G';
+	}
+	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
 }
 
 void but_callback_BLUE(void){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	int msg = 8;
-	printf("entreii");
+	Data data;
+	data.id = '8';
+	data.value = 0;
 	if(pio_get(BUT_PIO_BLUE, PIO_INPUT, BUT_IDX_MASK_BLUE) == 0) {
-		xQueueSendFromISR(xQueue_HIGH, &msg, &xHigherPriorityTaskWoken);
-		} else {
-		xQueueSendFromISR(xQueue_LOW, &msg, &xHigherPriorityTaskWoken);
+		data.button = '8';
 	}
+	else {
+		data.button = 'H';
+	}
+	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
 }
 
 void AFEC_VRX_callback_LEFT(void){
-	afecData afec;
+	volatile Data data1;
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	afec.m = 'I';
-	afec.value = afec_channel_get_value(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT);
-	xQueueSendFromISR(xQueue_AFEC, &afec, &xHigherPriorityTaskWoken);
+	data1.id = 'I';
+	data1.button = 'Y';
+	data1.value = afec_channel_get_value(AFEC_VRX_LEFT, AFEC_VRX_CHANNEL_LEFT);
+	xQueueSendFromISR(xQueue_UNICA, &data1, &xHigherPriorityTaskWoken);
 	
 	afec_channel_enable(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT);
 	afec_start_software_conversion(AFEC_VRY_LEFT);
 }
 
 void AFEC_VRY_callback_LEFT(void){
-	afecData afec;
+	volatile Data data2;
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	afec.m = 'J';
-	afec.value = afec_channel_get_value(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT);
-	xQueueSendFromISR(xQueue_AFEC, &afec, &xHigherPriorityTaskWoken);
+	data2.id = 'J';
+	data2.button = 'Y';
+	data2.value = afec_channel_get_value(AFEC_VRY_LEFT, AFEC_VRY_CHANNEL_LEFT);
+	xQueueSendFromISR(xQueue_UNICA, &data2, &xHigherPriorityTaskWoken);
 	
 }
 
 void AFEC_VRX_callback_RIGHT(void){
-	afecData afec;
+	Data data;
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	afec.m = 'K';
-	afec.value = afec_channel_get_value(AFEC_VRX_RIGHT, AFEC_VRX_CHANNEL_RIGHT);
-	xQueueSendFromISR(xQueue_AFEC, &afec, &xHigherPriorityTaskWoken);
+	data.id = 'K';
+	data.button = 'Z';
+	data.value = afec_channel_get_value(AFEC_VRX_RIGHT, AFEC_VRX_CHANNEL_RIGHT);
+	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
 	
 	afec_channel_enable(AFEC_VRY_RIGHT, AFEC_VRY_CHANNEL_RIGHT);
 	afec_start_software_conversion(AFEC_VRY_RIGHT);
+	
+	//float x = round(((data.value * (-65.25) - 255*65.25) /255)+65.25,2);
+	//printf("x %d \n", (int) x);
 }
 
 void AFEC_VRY_callback_RIGHT(void){
-	afecData afec;
+	Data data;
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	afec.m = 'L';
-	afec.value = afec_channel_get_value(AFEC_VRY_RIGHT, AFEC_VRY_CHANNEL_RIGHT);
-	xQueueSendFromISR(xQueue_AFEC, &afec, &xHigherPriorityTaskWoken);
-	
+	data.id = 'L';
+	data.button = 'Z';
+	data.value = afec_channel_get_value(AFEC_VRY_RIGHT, AFEC_VRY_CHANNEL_RIGHT);
+	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
+
 }
 
 /**
@@ -317,6 +368,7 @@ void TC0_Handler(void){
 
 void io_init(void){
 	pmc_enable_periph_clk(LED_PIO_ID);
+	pmc_enable_periph_clk(LED_PIO_ID_HAND);
 
 	pmc_enable_periph_clk(BUT_PIO_ID_UP);
  	pmc_enable_periph_clk(BUT_PIO_ID_DOWN);
@@ -329,7 +381,8 @@ void io_init(void){
 	pmc_enable_periph_clk(BUT_PIO_ID_BLUE);
 
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
-	
+	pio_set_output(LED_PIO_HAND, LED_IDX_MASK_HAND, 1, 0, 0);
+
 	pio_configure(BUT_PIO_UP, PIO_INPUT, BUT_IDX_MASK_UP, PIO_PULLUP | PIO_DEBOUNCE);
 	pio_set_debounce_filter(BUT_PIO_UP, BUT_IDX_MASK_UP, 60);
  	pio_configure(BUT_PIO_DOWN, PIO_INPUT, BUT_IDX_MASK_DOWN, PIO_PULLUP | PIO_DEBOUNCE);
@@ -525,6 +578,8 @@ int hc05_init(void) {
 	usart_send_command(USART_COM, buffer_rx, 1000, "AT", 100);
 	vTaskDelay( 500 / portTICK_PERIOD_MS);
 	usart_send_command(USART_COM, buffer_rx, 1000, "AT+PIN0000", 100);
+	vTaskDelay( 500 / portTICK_PERIOD_MS);
+	usart_send_command(USART_COM, buffer_rx, 1000, "X", 100);
 }
 
 static void config_AFEC(void){
@@ -625,218 +680,133 @@ void TC_init(Tc * TC, int ID_TC, int TC_CHANNEL, int freq){
 	tc_start(TC, TC_CHANNEL);
 }
 
+void send_package(Data data){
+	char eof = 'X';
+	while(!usart_is_tx_ready(USART_COM)) {
+		vTaskDelay(10 / portTICK_PERIOD_MS);
+	}
+	usart_write(USART_COM, data.id);
+
+	while(!usart_is_tx_ready(USART_COM)) {
+		vTaskDelay(10 / portTICK_PERIOD_MS);
+	}
+	usart_write(USART_COM, data.button);
+
+	while(!usart_is_tx_ready(USART_COM)) {
+		vTaskDelay(10 / portTICK_PERIOD_MS);
+	}
+	usart_write(USART_COM, data.value);
+
+	while(!usart_is_tx_ready(USART_COM)) {
+		vTaskDelay(10 / portTICK_PERIOD_MS);
+	}
+	usart_write(USART_COM, data.value >> 8);
+
+	while(!usart_is_tx_ready(USART_COM)) {
+		vTaskDelay(10 / portTICK_PERIOD_MS);
+	}
+	usart_write(USART_COM, eof);
+}
 
 /************************************************************************/
 /* TASKS                                                                */
 /************************************************************************/
-
-void task_bluetooth(void) {
-	printf("Task Bluetooth started \n");
-	/* iniciliza botao */
+void task_handshake(void) {
+	printf("Task HandShake started \n");
+	
 	printf("Inicializando HC05 \n");
 	config_usart0();
 	hc05_init();
-	config_AFEC();
-	TC_init(TC0, ID_TC0, 0, 10);
-	tc_start(TC0, 0);
+	
 	// configura LEDs e Botões
 	io_init();
-	afecData afec;
-	int msg = 0;
-
-	char button1 = '0';
-	int	button2 = 0;
+	
+	Data data;
 	char eof = 'X';
 
-	// Task não deve retornar.
+	data.id = 'W';
+	data.button = 'W';
+	data.value = 0;
+	send_package(data);
+	char resposta = 0;
+	
 	while(1) {
-		if (xQueueReceive(xQueue_HIGH, &msg, (TickType_t) 0)) {
-			if (msg == 1) {
-				button1 = '1';
+		if (usart_read(USART_COM, &resposta) == 0) {
+			printf("rx = %c \n", resposta);
+			if (resposta == 'w') {
+				printf("resposta == %c \n", resposta);
+								/* Create task to send data from bluetooth */
+				xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xBluetooth);
 			}
- 			if (msg == 2) {
-				button1 = '2';
- 			}
-			if (msg == 3) {
-				button1 = '3';
-			}
-			if (msg == 4) {
-				button1 = '4';
-			}
-			if (msg == 5) {
-				button1 = '5';
-			}
-			if (msg == 6) {
-				button1 = '6';
-				printf("Yellow");
-			}
-			if (msg == 7) {
-				button1 = '7';
-				printf("botao 7");
-			}
-			if (msg == 8) {
-				printf("botao 8");
-				button1 = '8';
-			}
-			// envia status botão
-			while(!usart_is_tx_ready(USART_COM)) {
-				vTaskDelay(10 / portTICK_PERIOD_MS);
-			}
-			usart_write(USART_COM, button1);
-			
-			// envia fim de pacote
-			while(!usart_is_tx_ready(USART_COM)) {
-				vTaskDelay(10 / portTICK_PERIOD_MS);
-			}
-			usart_write(USART_COM, eof);
-			// dorme por 500 ms
-			//vTaskDelay(500 / portTICK_PERIOD_MS);
-			
 		}
-		else if (xQueueReceive(xQueue_LOW, &msg, (TickType_t) 0)) {
-			if (msg == 1) {
-				button1 = 'A';
-			}
-			if (msg == 2) {
-		 		button1 = 'B';
- 			}
-			if (msg == 3) {
-				button1 = 'C';
-			}
-			if (msg == 4) {
-				button1 = 'D';
-			}
-			if (msg == 5) {
-				button1 = 'E';
-			}
-			if (msg == 6) {
-				button1 = 'F';
-			}
-			if (msg == 7) {
-				button1 = 'G';
-			}
-			if (msg == 8) {
-				button1 = 'H';
-			}
-			// envia status botão
-			while(!usart_is_tx_ready(USART_COM)) {
-				vTaskDelay(10 / portTICK_PERIOD_MS);
-			}
-			usart_write(USART_COM, button1);
-			
-			// envia fim de pacote
-			while(!usart_is_tx_ready(USART_COM)) {
-				vTaskDelay(10 / portTICK_PERIOD_MS);
-			}
-			usart_write(USART_COM, eof);
-			// dorme por 500 ms
-			//vTaskDelay(500 / portTICK_PERIOD_MS);
+		else {
+			printf("entrei no else");
+			send_package(data);
 		}
-		else if (xQueueReceive(xQueue_AFEC, &afec, (TickType_t) 0)){
-			if (afec.m == 'I'){
-				button2 = afec.value;
-					
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, afec.m);
-					
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, button2);
-					
-				while(!usart_is_tx_ready(USART_COM)) {   
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, button2 >> 8);
-					
-				// envia fim de pacote
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, eof);
-			}
-			if (afec.m == 'J'){
-				button2 = afec.value;
-				
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, afec.m);
-						
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, button2);
-						
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, button2 >> 8);
-						
-				// envia fim de pacote
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, eof);
-				
-			}
-			if (afec.m == 'K'){
-				button2 = afec.value;
-				
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, afec.m);
-				
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, button2);
-				
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, button2 >> 8);
-				
-				// envia fim de pacote
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, eof);
-				
-			}
-			if (afec.m == 'L'){
-				button2 = afec.value;
-				
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, afec.m);
-				
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, button2);
-				
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, button2 >> 8);
-				
-				// envia fim de pacote
-				while(!usart_is_tx_ready(USART_COM)) {
-					vTaskDelay(10 / portTICK_PERIOD_MS);
-				}
-				usart_write(USART_COM, eof);
-				
-			}
-			
-		}	
+		
+		vTaskDelay(500 / portTICK_PERIOD_MS);
 	}
 }
+
+void task_bluetooth(void) {
+	printf("Task Bluetooth started \n");
+	vTaskDelete(xHandshake);
+	/* iniciliza botao */
+	config_AFEC();
+	TC_init(TC0, ID_TC0, 0, 3);
+	tc_start(TC0, 0);
+	// configura LEDs e Botões
+	pio_clear(LED_PIO_HAND, LED_IDX_MASK_HAND);
+
+	Data data;
+
+	char eof = 'X';
+	int valor_anterior_x = 0;
+	int valor_anterior_y = 0;
+	int valor_anterior_rx = 0;
+	int valor_anterior_ry = 0;
 	
+	// Task não deve retornar.
+	while(1) {
+		if (xQueueReceive(xQueue_UNICA, &data, 0)) {
+			if (data.value == 0){	
+				printf("data id (  %c   )", data.id);
+				send_package(data);
+			}
+			
+			if (data.button == 'Y'){
+				if (data.id == 'I'){
+					if((data.value > valor_anterior_x + 200) || (data.value < valor_anterior_x - 200)){
+						send_package(data);
+						valor_anterior_x = data.value;
+					}
+				}
+				if (data.id == 'J'){
+					if ((data.value > valor_anterior_y + 200) || (data.value < valor_anterior_y - 200)){
+						send_package(data);
+						valor_anterior_y = data.value;
+					}
+				}
+			}
+			
+			if (data.button == 'Z'){
+				if (data.id == 'K'){
+					if((data.value > valor_anterior_rx + 200) || (data.value < valor_anterior_rx - 200)){
+						send_package(data);
+						valor_anterior_rx = data.value;
+					}
+				}
+				if (data.id == 'L'){
+					if ((data.value > valor_anterior_ry + 200) || (data.value < valor_anterior_ry - 200)){
+						send_package(data);
+						valor_anterior_ry = data.value;
+					}
+				}
+			}
+		}
+		}
+}
+
 /************************************************************************/
 /* main                                                                 */
 /************************************************************************/
@@ -847,22 +817,14 @@ int main(void) {
 	board_init();
 	configure_console();
 	
-	xQueue_HIGH = xQueueCreate(32, sizeof(int));
-	xQueue_LOW = xQueueCreate(32, sizeof(int));
-	xQueue_AFEC = xQueueCreate(32, sizeof(afecData));
+	xQueue_UNICA = xQueueCreate(32, sizeof(Data));
 	
-	if (xQueue_HIGH == NULL){
-		printf("falha em criar a queue \n");
-	}
-	if (xQueue_LOW == NULL){
-		printf("falha em criar a queue \n");
-	}
-	if (xQueue_AFEC == NULL){
+	if (xQueue_UNICA == NULL){
 		printf("falha em criar a queue \n");
 	}
 	/* Create task to make led blink */
-	if (xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL) != pdPASS) {
-		printf("Erro ao criar task bluetooth \n");
+	if (xTaskCreate(task_handshake, "HSK", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xHandshake) != pdPASS) {
+		printf("Erro ao criar task handshake \n");
 	}
 
 	/* Start the scheduler. */

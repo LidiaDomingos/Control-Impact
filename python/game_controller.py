@@ -27,84 +27,96 @@ class SerialControllerInterface:
             self.incoming = self.ser.read()
             logging.debug("Received INCOMING: {}".format(self.incoming))
 
-        data = self.ser.read()
-        logging.debug("Received DATA: {}".format(data))
-        print(data)
+        id = self.ser.read()
+        button = self.ser.read()
+        value1 = self.ser.read()
+        value2 = self.ser.read()
 
-        if data == b'1':
+        logging.debug("Received DATA: {}, button {}, value1 {}".format(id, button, value1))
+
+        if button == b'W':
+            self.ser.write(b'w')
+            logging.info("Mandando w de volta pro microship") 
+
+        if button == b'1':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['UP'], 1)
 
-        elif data == b'A':
+        if button == b'A':
             self.j.set_button(self.mapping.button['UP'], 0)
 
-        if data == b'2':
+        if button == b'2':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['DOWN'], 1)
-        elif data == b'B':
+        if button == b'B':
             self.j.set_button(self.mapping.button['DOWN'], 0)  
 
-        if data == b'3':
+        if button == b'3':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['LEFT'], 1)
-        elif data == b'C':
+        if button == b'C':
             self.j.set_button(self.mapping.button['LEFT'], 0)  
 
-        if data == b'4':
+        if button == b'4':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['RIGHT'], 1)
-        elif data == b'D':
+        if button == b'D':
             self.j.set_button(self.mapping.button['RIGHT'], 0)  
 
-        if data == b'5':
+        if button == b'5':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['RED'], 1)
-        elif data == b'E':
+        if button == b'E':
             self.j.set_button(self.mapping.button['RED'], 0)  
 
-        if data == b'6':
+        if button == b'6':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['YELLOW'], 1)
-        elif data == b'F':
+        if button == b'F':
             self.j.set_button(self.mapping.button['YELLOW'], 0)  
 
-        if data == b'7':
+        if button == b'7':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['GREEN'], 1)
-        elif data == b'G':
+        if button == b'G':
             self.j.set_button(self.mapping.button['GREEN'], 0)  
 
-        if data == b'8':
+        if button == b'8':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['BLUE'], 1)
-        elif data == b'H':
+        if button == b'H':
             self.j.set_button(self.mapping.button['BLUE'], 0)  
 
-        if data == b'I':
-            valor1 = self.ser.read()
-            valor2 = self.ser.read()
-            conv_valor1 = int.from_bytes(valor2 + valor1, byteorder="big")
-            logging.info(conv_valor1)
-            self.j.set_axis(pyvjoy.HID_USAGE_X, conv_valor1*int(32762/4095))
-        
-        if data == b'J':
-            valor1 = self.ser.read()
-            valor2 = self.ser.read()
-            conv_valor2 = int.from_bytes(valor2 + valor1, byteorder="big")
-            self.j.set_axis(pyvjoy.HID_USAGE_Y, conv_valor2*int(32762/4095))
+        if button == b'Y':
+            if id == b'I':
+                conv_valor1 = int.from_bytes(value2 + value1, byteorder="big")
+                if (conv_valor1 > 3400 or conv_valor1 < 2000):
+                    self.j.set_axis(pyvjoy.HID_USAGE_X, conv_valor1*int(32762/4095))
+                else:
+                    self.j.set_axis(pyvjoy.HID_USAGE_X, int(32762/2))
 
-        if data == b'K':
-            valor1 = self.ser.read()
-            valor2 = self.ser.read()
-            conv_valor1 = int.from_bytes(valor2 + valor1, byteorder="big")
-            logging.info(conv_valor1)
-            self.j.set_axis(pyvjoy.HID_USAGE_RX, conv_valor1*int(32762/4095))
-        
-        if data == b'L':
-            valor1 = self.ser.read()
-            valor2 = self.ser.read()
-            conv_valor2 = int.from_bytes(valor2 + valor1, byteorder="big")
-            self.j.set_axis(pyvjoy.HID_USAGE_RY, conv_valor2*int(32762/4095))
+            if id == b'J':
+                conv_valor2 = int.from_bytes(value2 + value1, byteorder="big")
+                if (conv_valor2 > 3400 or conv_valor2 < 2000):
+                    self.j.set_axis(pyvjoy.HID_USAGE_Y, conv_valor2*int(32762/4095))
+                else:
+                    self.j.set_axis(pyvjoy.HID_USAGE_Y, int(32762/2))
+
+        if button == b'Z':
+            if id == b'K':
+                conv_valor3 = int.from_bytes(value2 + value1, byteorder="big")
+                if (conv_valor3 > 3400 or conv_valor3 < 2000):
+                    self.j.set_axis(pyvjoy.HID_USAGE_RX, conv_valor3*int(32762/4095))
+                else:
+                    self.j.set_axis(pyvjoy.HID_USAGE_RX, int(32762/2))
+            
+            if id == b'L':
+                conv_valor4 = int.from_bytes(value2 + value1, byteorder="big")
+                if (conv_valor4 > 3400 or conv_valor4 < 2000):
+                    self.j.set_axis(pyvjoy.HID_USAGE_RY, conv_valor4*int(32762/4095))
+                else:
+                    self.j.set_axis(pyvjoy.HID_USAGE_RY, int(32762/2))
+
 
         self.incoming = self.ser.read()
 
