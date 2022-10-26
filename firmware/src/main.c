@@ -700,6 +700,7 @@ void send_package(Data data){
 	while(!usart_is_tx_ready(USART_COM)) {
 		vTaskDelay(10 / portTICK_PERIOD_MS);
 	}
+	
 	usart_write(USART_COM, data.value >> 8);
 
 	while(!usart_is_tx_ready(USART_COM)) {
