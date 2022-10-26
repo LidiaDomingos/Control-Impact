@@ -25,6 +25,16 @@
 #define LED_IDX_HAND      22
 #define LED_IDX_MASK_HAND (1 << LED_IDX_HAND)
 
+#define LED_PIO_BLUE      PIOD
+#define LED_PIO_ID_BLUE   ID_PIOD
+#define LED_IDX_BLUE      26
+#define LED_IDX_MASK_BLUE (1 << LED_IDX_BLUE)
+
+#define LED_PIO_RED      PIOA
+#define LED_PIO_ID_RED   ID_PIOA
+#define LED_IDX_RED      24
+#define LED_IDX_MASK_RED (1 << LED_IDX_RED)
+
 // Botões azuis da esquerda
 #define BUT_PIO_UP            	PIOD
 #define BUT_PIO_ID_UP         	ID_PIOD
@@ -369,6 +379,8 @@ void TC0_Handler(void){
 void io_init(void){
 	pmc_enable_periph_clk(LED_PIO_ID);
 	pmc_enable_periph_clk(LED_PIO_ID_HAND);
+	pmc_enable_periph_clk(LED_PIO_ID_BLUE);
+	pmc_enable_periph_clk(LED_PIO_ID_RED);
 
 	pmc_enable_periph_clk(BUT_PIO_ID_UP);
  	pmc_enable_periph_clk(BUT_PIO_ID_DOWN);
@@ -382,6 +394,8 @@ void io_init(void){
 
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 	pio_set_output(LED_PIO_HAND, LED_IDX_MASK_HAND, 1, 0, 0);
+	pio_set_output(LED_PIO_BLUE, LED_IDX_MASK_BLUE, 0, 0, 0);
+	pio_set_output(LED_PIO_RED, LED_IDX_MASK_RED, 0, 0, 0);
 
 	pio_configure(BUT_PIO_UP, PIO_INPUT, BUT_IDX_MASK_UP, PIO_PULLUP | PIO_DEBOUNCE);
 	pio_set_debounce_filter(BUT_PIO_UP, BUT_IDX_MASK_UP, 60);
@@ -772,18 +786,34 @@ void task_bluetooth(void) {
 		if (xQueueReceive(xQueue_UNICA, &data, 0)) {
 			if (data.value == 0){	
 				printf("data id (  %c   )", data.id);
+				if (data.button == '1' || data.button == '2' || data.button == '3' || data.button == '4'){
+					pio_set(LED_PIO_BLUE, LED_IDX_MASK_BLUE);
+					printf("liga");	
+				}
+				else if (data.button == 'A' || data.button == 'B' || data.button == 'C' || data.button == 'D') {
+					pio_clear(LED_PIO_BLUE, LED_IDX_MASK_BLUE);	
+					printf("desliga");
+				}
+				if (data.button == '5' || data.button == '6' || data.button == '7' || data.button == '8'){
+					pio_set(LED_PIO_RED, LED_IDX_MASK_RED);
+					printf("liga");
+				}
+				else if (data.button == 'E' || data.button == 'F' || data.button == 'G' || data.button == 'H') {
+					pio_clear(LED_PIO_RED, LED_IDX_MASK_RED);
+					printf("desliga");
+				}
 				send_package(data);
 			}
 			
 			if (data.button == 'Y'){
 				if (data.id == 'I'){
-					if((data.value > valor_anterior_x + 200) || (data.value < valor_anterior_x - 200)){
+					if((data.value > valor_anterior_x + 300) || (data.value < valor_anterior_x - 300)){
 						send_package(data);
 						valor_anterior_x = data.value;
 					}
 				}
 				if (data.id == 'J'){
-					if ((data.value > valor_anterior_y + 200) || (data.value < valor_anterior_y - 200)){
+					if ((data.value > valor_anterior_y + 300) || (data.value < valor_anterior_y - 300)){
 						send_package(data);
 						valor_anterior_y = data.value;
 					}
@@ -792,13 +822,13 @@ void task_bluetooth(void) {
 			
 			if (data.button == 'Z'){
 				if (data.id == 'K'){
-					if((data.value > valor_anterior_rx + 200) || (data.value < valor_anterior_rx - 200)){
+					if((data.value > valor_anterior_rx + 300) || (data.value < valor_anterior_rx - 300)){
 						send_package(data);
 						valor_anterior_rx = data.value;
 					}
 				}
 				if (data.id == 'L'){
-					if ((data.value > valor_anterior_ry + 200) || (data.value < valor_anterior_ry - 200)){
+					if ((data.value > valor_anterior_ry + 300) || (data.value < valor_anterior_ry - 300)){
 						send_package(data);
 						valor_anterior_ry = data.value;
 					}
