@@ -12,8 +12,11 @@ class MyControllerMap:
 class SerialControllerInterface:
 
     # Protocolo
-    # byte 1 -> Botão 1 (estado - Apertado 1 ou não 0)
-    # byte 2 -> EOP - End of Packet -> valor reservado 'X'
+    # byte 1 -> id do botão
+    # byte 2 -> status do botão
+    # byte 3 -> byte mais significativo do valor do analógico
+    # byte 5 -> byte menos significativo do valor do analógico
+    # byte 5 -> EOP - End of Packet -> valor reservado 'X'
 
     def __init__(self, port, baudrate):
         self.ser = serial.Serial(port, baudrate=baudrate)
@@ -34,6 +37,7 @@ class SerialControllerInterface:
 
         logging.debug("Received DATA: {}, button {}, value1 {}".format(id, button, value1))
 
+        # Protocolo do Handshake
         if button == b'W':
             self.ser.write(b'w')
             logging.info("Mandando w de volta pro microship") 
@@ -87,6 +91,7 @@ class SerialControllerInterface:
         if button == b'H':
             self.j.set_button(self.mapping.button['BLUE'], 0)  
 
+        # Analógico esquerdo
         if button == b'Y':
             if id == b'I':
                 conv_valor1 = int.from_bytes(value2 + value1, byteorder="big")
@@ -102,21 +107,25 @@ class SerialControllerInterface:
                 else:
                     self.j.set_axis(pyvjoy.HID_USAGE_Y, int(32762/2))
 
+        # Analógico direito
         if button == b'Z':
             if id == b'K':
                 conv_valor3 = int.from_bytes(value2 + value1, byteorder="big")
                 if (conv_valor3 > 3400 or conv_valor3 < 2000):
                     self.j.set_axis(pyvjoy.HID_USAGE_RX, conv_valor3*int(32762/4095))
+                    self.j.set_axis(pyvjoy.HID_USAGE_RZ, 32762 - conv_valor3*int(32762/4095))
                 else:
                     self.j.set_axis(pyvjoy.HID_USAGE_RX, int(32762/2))
+                    self.j.set_axis(pyvjoy.HID_USAGE_RZ, int(32762/2))
             
             if id == b'L':
                 conv_valor4 = int.from_bytes(value2 + value1, byteorder="big")
                 if (conv_valor4 > 3400 or conv_valor4 < 2000):
                     self.j.set_axis(pyvjoy.HID_USAGE_RY, conv_valor4*int(32762/4095))
+                    self.j.set_axis(pyvjoy.HID_USAGE_RZ, 32762 - conv_valor4*int(32762/4095))
                 else:
                     self.j.set_axis(pyvjoy.HID_USAGE_RY, int(32762/2))
-
+                    self.j.set_axis(pyvjoy.HID_USAGE_RZ, int(32762/2))
 
         self.incoming = self.ser.read()
 

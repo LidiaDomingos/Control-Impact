@@ -192,16 +192,12 @@ void but_callback_UP(void){
 	data.id = '1';
 	data.value = 0;
 	if(pio_get(BUT_PIO_UP, PIO_INPUT, BUT_IDX_MASK_UP) == 0) {
-		printf("entrei no high");
 		data.button = '1';
  	} 
 	else {
-		printf("entrei no low");
 		data.button = 'A';
 	}
-	printf("mande pra fila");
  	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
-	printf("mande pra fila2");
 }
 
 void but_callback_DOWN(void){
@@ -216,7 +212,6 @@ void but_callback_DOWN(void){
 		data.button = 'B';
 	}
 	xQueueSendFromISR(xQueue_UNICA, &data, &xHigherPriorityTaskWoken);
-
 }
 
 void but_callback_LEFT(void){
@@ -336,8 +331,6 @@ void AFEC_VRX_callback_RIGHT(void){
 	afec_channel_enable(AFEC_VRY_RIGHT, AFEC_VRY_CHANNEL_RIGHT);
 	afec_start_software_conversion(AFEC_VRY_RIGHT);
 	
-	//float x = round(((data.value * (-65.25) - 255*65.25) /255)+65.25,2);
-	//printf("x %d \n", (int) x);
 }
 
 void AFEC_VRY_callback_RIGHT(void){
@@ -730,6 +723,7 @@ void task_handshake(void) {
 	printf("Task HandShake started \n");
 	
 	printf("Inicializando HC05 \n");
+	
 	config_usart0();
 	hc05_init();
 	
@@ -742,20 +736,17 @@ void task_handshake(void) {
 	data.id = 'W';
 	data.button = 'W';
 	data.value = 0;
+
 	send_package(data);
 	char resposta = 0;
 	
 	while(1) {
 		if (usart_read(USART_COM, &resposta) == 0) {
-			printf("rx = %c \n", resposta);
 			if (resposta == 'w') {
-				printf("resposta == %c \n", resposta);
-								/* Create task to send data from bluetooth */
 				xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xBluetooth);
 			}
 		}
 		else {
-			printf("entrei no else");
 			send_package(data);
 		}
 		
@@ -765,11 +756,14 @@ void task_handshake(void) {
 
 void task_bluetooth(void) {
 	printf("Task Bluetooth started \n");
+	
 	vTaskDelete(xHandshake);
-	/* iniciliza botao */
+	
 	config_AFEC();
+	
 	TC_init(TC0, ID_TC0, 0, 3);
 	tc_start(TC0, 0);
+	
 	// configura LEDs e Botões
 	pio_clear(LED_PIO_HAND, LED_IDX_MASK_HAND);
 
@@ -785,22 +779,17 @@ void task_bluetooth(void) {
 	while(1) {
 		if (xQueueReceive(xQueue_UNICA, &data, 0)) {
 			if (data.value == 0){	
-				printf("data id (  %c   )", data.id);
 				if (data.button == '1' || data.button == '2' || data.button == '3' || data.button == '4'){
 					pio_set(LED_PIO_BLUE, LED_IDX_MASK_BLUE);
-					printf("liga");	
 				}
 				else if (data.button == 'A' || data.button == 'B' || data.button == 'C' || data.button == 'D') {
 					pio_clear(LED_PIO_BLUE, LED_IDX_MASK_BLUE);	
-					printf("desliga");
 				}
 				if (data.button == '5' || data.button == '6' || data.button == '7' || data.button == '8'){
 					pio_set(LED_PIO_RED, LED_IDX_MASK_RED);
-					printf("liga");
 				}
 				else if (data.button == 'E' || data.button == 'F' || data.button == 'G' || data.button == 'H') {
 					pio_clear(LED_PIO_RED, LED_IDX_MASK_RED);
-					printf("desliga");
 				}
 				send_package(data);
 			}
