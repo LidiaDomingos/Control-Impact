@@ -35,10 +35,10 @@ O jogo principal que o controle foi pensado foi Genshin Impact, disponível para
 
 Os comandos disponíveis são:
 - Andar para todas as direções;
-- Movimentar a câmera para todas as direções;
+- Movimentar a câmera;
 - Os comandos disponíveis tanto nos quatros botões direito quanto nos quatros botões esquerdos do controle de PS4;
 
-Os feedbacks fornecidos são: um LED irá acender enquanto algum dos botões do lado direito for usado, assim como um LED será aceso quando um dos botões esquerdo for aceso. Além disso, um LED irá acender também quando um dos Joypads for utilizado.
+Os feedbacks fornecidos são: um LED azul irá acender enquanto algum dos botões do lado direito for usado, assim como um LED vermelho será aceso quando um dos botões esquerdo for aceso. Além disso, um LED irá acender também quando o controle estiver pronto para uso e ficará ligado enquanto o controle estiver funcionando.
 
 ## In/OUT (3 pts)
 
@@ -54,9 +54,25 @@ Os feedbacks fornecidos são: um LED irá acender enquanto algum dos botões do 
 
 #### Saídas:
 
-- LED's (digital): Um LED será aceso quando um dos quatros botões esquerdos for apertado, também irá ter um LED para os botões direitos, e outro LED para quando o analógico for utilizado também. 
+- LED's (digital): Um LED será aceso quando um dos quatros botões esquerdos for apertado, também irá ter um LED para os botões direitos, e outro LED para quando o controle estiver disponível para uso. 
 
 ### Design (2 pts)
 
 ![Controle](controle.png)
+
+### Montagem de testes
+
+<img src="montagem-testes.jpg" alt="montagem" width="500"/>
+
+### Protótipo montado e disponível pra uso
+
+<img src="controle-frente.jpg" alt="controle-frente" width="500"/>
+<img src="controle-atras.jpg" alt="controle-atras" width="500"/>
+
+### Vídeos do funcionamento
+
+- No jogo Genshin Impact: https://www.youtube.com/watch?v=2TztgHcmNII
+- Configurando os botões e analógicos: https://youtube.com/shorts/PBL_WXJy0Ck
+
+
 
