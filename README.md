@@ -6,48 +6,73 @@ Desenvolvendo um controle remoto.
 
 ### Integrantes
 
-- Nome1
-- Nome2
+- Lídia Alves Chagas Domingos
+- Lister Ogusuku Ribeiro
 
 ### Ideia
 
-<!--  Descreva aqui em poucas palavras qual a ideia do seu controle. Se ele vai ser de jogo ou de aplicação -->
+O controle foi produzido inspirado no PS4 e PS5, tendo como objetivo jogos que necessitam de dois tipos de movimentação, como por exemplo, andar e mexer a câmera, sendo utilizados dois Joypad's, e tendo mais oito botôes para serem usados para ataque ou outra funcionalidade que o jogo tenha.
 
 ### Nome
 
-<!-- De um nome ao seu controle! -->
+Control Impact
 
 ### Usuários 
 
-<!-- Descreva aqui quem seriam os possíveis usuários deste controle. -->
+O usuário principal pensado seriam pessoas que gostem de jogos e que preferem o uso de controle ao invés de mouse e teclado, com uma maior facilidade para se movimentar pelo jogo e sem precisar muito de um apoio para jogar como o teclado, que precisa de uma superfície plana, e o mouse que necessita de mousepad para um uso mais estável. 
 
 ### Software/Jogo 
 
-<!-- Qual software que seu controle vai controlar? -->
+O jogo principal que o controle foi pensado foi Genshin Impact, disponível para PS4 e Windows. Os botões Joypad's seriam para movimentação do personagem e da câmera, os quatros botões esquerdos para trocar o personagem e os quatros botões direitos para ataques e interação do personagem com o ambiente. O controle poderia ser utilzado para outros tipos de jogos de PS4 disponíveis para PC também. 
 
 ### Jornada do usuários (3 pts)
 
-<!-- Descreva ao menos duas jornadas de usuários distintos, é para caprichar! -->
+- Primeira Jornada: A pessoa está jogando um jogo no computador, entretanto está cansada de ficar sentada, porém ela quer continuar a jogar, para isso, ela pega o nosso controle, que é via bluetooth, e conecta em seu computador. Assim, ela pode jogar deitada na cama ou em qualquer outro lugar que ela achar confortável, além de poder transmitir na televisão o jogo, por exemplo, para ter uma visão maior do que na tela do computador.
+
+- Segunda Jornada: O usuário chamou um amigo para jogar com ele na sua casa, entretanto, o amigo esqueceu o seu mouse. Para os dois ainda poderem jogar juntos, o usuário conectaria nosso controle e enquanto o usuário jogasse no teclado e mouse, o seu amigo jogaria no controle.
 
 ### Comandos/ Feedbacks (2 pts)
 
-<!-- 
-Quais são os comandos/ operacões possíveis do seu controle?
+Os comandos disponíveis são:
+- Andar para todas as direções;
+- Movimentar a câmera;
+- Os comandos disponíveis tanto nos quatros botões direito quanto nos quatros botões esquerdos do controle de PS4;
 
-Quais os feedbacks que seu controle vai fornecer ao usuário?
--->
+Os feedbacks fornecidos são: um LED azul irá acender enquanto algum dos botões do lado direito for usado, assim como um LED vermelho será aceso quando um dos botões esquerdo for aceso. Além disso, um LED irá acender também quando o controle estiver pronto para uso e ficará ligado enquanto o controle estiver funcionando.
 
 ## In/OUT (3 pts)
 
-<!--
-Para cada Comando/ Feedback do seu controle, associe qual sensores/ atuadores pretende utilizar? Faca em formato de lista, exemplo:
+#### Entradas:
 
-- Avanca música: Push button amarelo
-- Volume da música: Fita de LED indicando potência do som
--->
+- Quatro botões esquerdos (digital): Normalmente, no PS4, são utilizados para troca de itens na mão do personagem. Para o Genshin Impact, será utilizado para a troca de personagens.
+
+- Joypad Esquerdo (analógico): Geralmente, movimentação do personagem, mesmo comando para Genshin Impact.
+
+- Joypad Direito (analógico): Maioria das vezes, utilizado para movimentação da câmera, também o mesmo comando para o jogo principal escolhido.
+
+- Quatro botões direitos (digital): São os famosos botões X, bola, triângulo e quadrado, normalmente usados para interação, ataque, entre outros. Para o genshin, o X será o pular, o bola será o normal ataque, o quadrado será interagir e triângulo o ataque especial.
+
+#### Saídas:
+
+- LED's (digital): Um LED será aceso quando um dos quatros botões esquerdos for apertado, também irá ter um LED para os botões direitos, e outro LED para quando o controle estiver disponível para uso. 
 
 ### Design (2 pts)
 
-<!--
-Faca um esboco de como seria esse controle (vai ter uma etapa que terão que detalhar melhor isso).
--->
+![Controle](controle.png)
+
+### Montagem de testes
+
+<img src="montagem-testes.jpg" alt="montagem" width="500"/>
+
+### Protótipo montado e disponível pra uso
+
+<img src="controle-frente.jpg" alt="controle-frente" width="500"/>
+<img src="controle-atras.jpg" alt="controle-atras" width="500"/>
+
+### Vídeos do funcionamento
+
+- No jogo Genshin Impact: https://www.youtube.com/watch?v=2TztgHcmNII
+- Configurando os botões e analógicos: https://youtube.com/shorts/PBL_WXJy0Ck
+
+
+

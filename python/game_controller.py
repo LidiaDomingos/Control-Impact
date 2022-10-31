@@ -6,14 +6,17 @@ import pyvjoy # Windows apenas
 
 class MyControllerMap:
     def __init__(self):
-        self.button = {'A': 1}
+        self.button = {'UP': 1, 'DOWN': 2, 'LEFT': 3, 'RIGHT': 4, 'RED': 5, 'YELLOW' : 6, 'GREEN': 7, 'BLUE': 8}
 
 
 class SerialControllerInterface:
 
     # Protocolo
-    # byte 1 -> Botão 1 (estado - Apertado 1 ou não 0)
-    # byte 2 -> EOP - End of Packet -> valor reservado 'X'
+    # byte 1 -> id do botão
+    # byte 2 -> status do botão
+    # byte 3 -> byte mais significativo do valor do analógico
+    # byte 5 -> byte menos significativo do valor do analógico
+    # byte 5 -> EOP - End of Packet -> valor reservado 'X'
 
     def __init__(self, port, baudrate):
         self.ser = serial.Serial(port, baudrate=baudrate)
@@ -27,14 +30,102 @@ class SerialControllerInterface:
             self.incoming = self.ser.read()
             logging.debug("Received INCOMING: {}".format(self.incoming))
 
-        data = self.ser.read()
-        logging.debug("Received DATA: {}".format(data))
+        id = self.ser.read()
+        button = self.ser.read()
+        value1 = self.ser.read()
+        value2 = self.ser.read()
 
-        if data == b'1':
+        logging.debug("Received DATA: {}, button {}, value1 {}".format(id, button, value1))
+
+        # Protocolo do Handshake
+        if button == b'W':
+            self.ser.write(b'w')
+            logging.info("Mandando w de volta pro microship") 
+
+        if button == b'1':
             logging.info("Sending press")
-            self.j.set_button(self.mapping.button['A'], 1)
-        elif data == b'0':
-            self.j.set_button(self.mapping.button['A'], 0)
+            self.j.set_button(self.mapping.button['UP'], 1)
+
+        if button == b'A':
+            self.j.set_button(self.mapping.button['UP'], 0)
+
+        if button == b'2':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['DOWN'], 1)
+        if button == b'B':
+            self.j.set_button(self.mapping.button['DOWN'], 0)  
+
+        if button == b'3':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['LEFT'], 1)
+        if button == b'C':
+            self.j.set_button(self.mapping.button['LEFT'], 0)  
+
+        if button == b'4':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['RIGHT'], 1)
+        if button == b'D':
+            self.j.set_button(self.mapping.button['RIGHT'], 0)  
+
+        if button == b'5':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['RED'], 1)
+        if button == b'E':
+            self.j.set_button(self.mapping.button['RED'], 0)  
+
+        if button == b'6':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['YELLOW'], 1)
+        if button == b'F':
+            self.j.set_button(self.mapping.button['YELLOW'], 0)  
+
+        if button == b'7':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['GREEN'], 1)
+        if button == b'G':
+            self.j.set_button(self.mapping.button['GREEN'], 0)  
+
+        if button == b'8':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['BLUE'], 1)
+        if button == b'H':
+            self.j.set_button(self.mapping.button['BLUE'], 0)  
+
+        # Analógico esquerdo
+        if button == b'Y':
+            if id == b'I':
+                conv_valor1 = int.from_bytes(value2 + value1, byteorder="big")
+                if (conv_valor1 > 3400 or conv_valor1 < 2000):
+                    self.j.set_axis(pyvjoy.HID_USAGE_X, conv_valor1*int(32762/4095))
+                else:
+                    self.j.set_axis(pyvjoy.HID_USAGE_X, int(32762/2))
+
+            if id == b'J':
+                conv_valor2 = int.from_bytes(value2 + value1, byteorder="big")
+                if (conv_valor2 > 3400 or conv_valor2 < 2000):
+                    self.j.set_axis(pyvjoy.HID_USAGE_Y, conv_valor2*int(32762/4095))
+                else:
+                    self.j.set_axis(pyvjoy.HID_USAGE_Y, int(32762/2))
+
+        # Analógico direito
+        if button == b'Z':
+            if id == b'K':
+                conv_valor3 = int.from_bytes(value2 + value1, byteorder="big")
+                if (conv_valor3 > 3400 or conv_valor3 < 2000):
+                    self.j.set_axis(pyvjoy.HID_USAGE_RX, conv_valor3*int(32762/4095))
+                    self.j.set_axis(pyvjoy.HID_USAGE_RZ, 32762 - conv_valor3*int(32762/4095))
+                else:
+                    self.j.set_axis(pyvjoy.HID_USAGE_RX, int(32762/2))
+                    self.j.set_axis(pyvjoy.HID_USAGE_RZ, int(32762/2))
+            
+            if id == b'L':
+                conv_valor4 = int.from_bytes(value2 + value1, byteorder="big")
+                if (conv_valor4 > 3400 or conv_valor4 < 2000):
+                    self.j.set_axis(pyvjoy.HID_USAGE_RY, conv_valor4*int(32762/4095))
+                    self.j.set_axis(pyvjoy.HID_USAGE_RZ, 32762 - conv_valor4*int(32762/4095))
+                else:
+                    self.j.set_axis(pyvjoy.HID_USAGE_RY, int(32762/2))
+                    self.j.set_axis(pyvjoy.HID_USAGE_RZ, int(32762/2))
 
         self.incoming = self.ser.read()
 
